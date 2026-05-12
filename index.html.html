@@ -4,764 +4,1136 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgendaSalud · CESFAM</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+<!-- ═══════════════════════════════════════════════════════════
+     PASO 1: REEMPLAZA ESTOS 7 VALORES CON LOS DE TU FIREBASE
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+var FB_CONFIG = {
+  apiKey: "AIzaSyBGeTXreDfb9ar56FkWBzN1g6nWm7vUuvg",
+  authDomain: "agenda-cesfam-f5f0a.firebaseapp.com",
+  databaseURL: "https://agenda-cesfam-f5f0a-default-rtdb.firebaseio.com",
+  projectId: "agenda-cesfam-f5f0a",
+  storageBucket: "agenda-cesfam-f5f0a.firebasestorage.app",
+  messagingSenderId: "699268506130",
+  appId: "1:699268506130:web:1333fba48b845f7be82ecb"
+};
+</script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-:root {
-  --blue:#1B4F72;--blue-mid:#2980B9;--blue-pale:#EBF5FB;
-  --green:#1A6B3C;--green-mid:#27AE60;--green-pale:#EAFAF1;
-  --red:#922B21;--red-mid:#E74C3C;--red-pale:#FDEDEC;
-  --gray:#5D6D7E;--gray-light:#D5DBDB;--gray-pale:#F4F6F8;
-  --text:#17202A;--surface:#FFF;--r:12px;--rs:8px;
-}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:#EEF2F7;color:var(--text);min-height:100vh;line-height:1.55}
-.header{background:var(--blue);color:#fff;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
-.header-logo{font-family:'Playfair Display',serif;font-size:20px;color:#fff;display:flex;align-items:center;gap:10px}
-.logo-icon{width:28px;height:28px}
-.btn-back{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;transition:background 0.2s}
-.btn-back:hover{background:rgba(255,255,255,0.28)}
-.main{max-width:680px;margin:0 auto;padding:1.5rem 1rem 5rem}
-.view{display:none}
-.view.active{display:block}
-.landing-hero{text-align:center;padding:2rem 1rem 1.5rem}
-.landing-hero h1{font-family:'Playfair Display',serif;font-size:30px;color:var(--blue);margin-bottom:0.5rem;line-height:1.25}
-.landing-hero p{color:var(--gray);font-size:15px;max-width:380px;margin:0 auto 1.5rem}
-.portal-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
-@media(max-width:460px){.portal-cards{grid-template-columns:1fr}}
-.portal-card{background:var(--surface);border-radius:16px;padding:2rem 1.25rem;text-align:center;cursor:pointer;border:2px solid transparent;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-.portal-card:hover{border-color:var(--blue-mid);transform:translateY(-2px);box-shadow:0 6px 20px rgba(27,79,114,0.14)}
-.portal-card .card-icon{width:58px;height:58px;border-radius:50%;margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;font-size:26px}
-.portal-card.patient .card-icon{background:var(--blue-pale)}
-.portal-card.admin .card-icon{background:#FEF9E7}
-.portal-card h3{font-size:17px;font-weight:700;margin-bottom:0.3rem;color:var(--text)}
-.portal-card p{font-size:13px;color:var(--gray)}
-.steps{display:flex;align-items:center;margin-bottom:1.25rem}
-.step-item{display:flex;align-items:center;flex:1}
-.step-dot{width:28px;height:28px;border-radius:50%;background:var(--gray-light);color:var(--gray);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:all 0.3s}
-.step-dot.active{background:var(--blue);color:#fff}
-.step-dot.done{background:var(--green-mid);color:#fff}
-.step-line{flex:1;height:2px;background:var(--gray-light);transition:background 0.3s}
-.step-line.done{background:var(--green-mid)}
-.card{background:var(--surface);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
-.card-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--gray-pale)}
-.card-title{font-size:16px;font-weight:700;color:var(--blue)}
-.card-subtitle{font-size:13px;color:var(--gray)}
-.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-@media(max-width:360px){.slots-grid{grid-template-columns:repeat(2,1fr)}}
-.slot-btn{padding:10px 8px;border-radius:var(--rs);border:1.5px solid var(--gray-light);background:var(--surface);cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;width:100%}
-.slot-btn:hover{border-color:var(--blue-mid);background:var(--blue-pale)}
-.slot-btn.selected{border-color:var(--blue);background:var(--blue);color:#fff}
-.slot-time{font-size:15px;font-weight:700}
-.slot-prof{font-size:11px;color:var(--gray);margin-top:2px}
-.slot-btn.selected .slot-prof{color:rgba(255,255,255,0.75)}
-.form-group{margin-bottom:1rem}
-.form-label{font-size:12px;font-weight:700;color:var(--gray);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.5px}
-.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--gray-light);border-radius:var(--rs);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:var(--text);background:var(--surface);transition:border-color 0.2s;outline:none}
-.form-input:focus{border-color:var(--blue-mid)}
-.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235D6D7E' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
-input[type="date"],input[type="time"]{padding:11px 14px;border:1.5px solid var(--gray-light);border-radius:var(--rs);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:var(--text);background:var(--surface);outline:none;width:100%}
-input[type="date"]:focus,input[type="time"]:focus{border-color:var(--blue-mid)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:var(--rs);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;text-decoration:none;width:100%}
-.btn-primary{background:var(--blue);color:#fff}
-.btn-primary:hover{background:#154060}
-.btn-success{background:var(--green-mid);color:#fff}
-.btn-success:hover{background:var(--green)}
-.btn-outline{background:transparent;border:1.5px solid var(--gray-light);color:var(--gray)}
-.btn-outline:hover{border-color:var(--blue);color:var(--blue)}
-.btn-danger-sm{background:var(--red-pale);color:var(--red);border:1px solid #F1948A;font-size:13px;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;transition:all 0.2s}
-.btn-danger-sm:hover{background:var(--red-mid);color:#fff}
+body{font-family:'Inter',sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh}
+
+/* LOADING */
+#pantalla-carga{position:fixed;inset:0;background:#1B4F72;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:white}
+#pantalla-carga h2{font-size:22px;margin-bottom:8px}
+#pantalla-carga p{font-size:14px;opacity:0.75}
+.rueda{width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top:3px solid white;border-radius:50%;animation:girar 0.8s linear infinite;margin-bottom:20px}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+/* HEADER */
+header{background:#1B4F72;color:white;padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.logo{font-size:18px;font-weight:700;letter-spacing:-0.3px}
+.logo span{font-size:13px;font-weight:400;opacity:0.7;margin-left:6px}
+#btn-volver{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;border-radius:20px;padding:5px 14px;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;display:none}
+#btn-volver:hover{background:rgba(255,255,255,0.25)}
+
+/* MAIN */
+.contenedor{max-width:640px;margin:0 auto;padding:20px 16px 80px}
+.vista{display:none}
+.vista.activa{display:block}
+
+/* CARDS */
+.card{background:white;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
+.card-titulo{font-size:15px;font-weight:700;color:#1B4F72;margin-bottom:4px}
+.card-sub{font-size:13px;color:#718096}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f4f8}
+.icono{font-size:22px}
+
+/* PORTAL */
+.hero{text-align:center;padding:28px 16px 16px}
+.hero h1{font-size:26px;font-weight:700;color:#1B4F72;margin-bottom:8px;line-height:1.3}
+.hero p{font-size:14px;color:#718096;max-width:340px;margin:0 auto}
+.portales{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+@media(max-width:420px){.portales{grid-template-columns:1fr}}
+.portal{background:white;border-radius:16px;padding:28px 16px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.portal:hover{border-color:#2980B9;transform:translateY(-2px);box-shadow:0 8px 20px rgba(27,79,114,0.13)}
+.portal .ico{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.portal.paciente .ico{background:#EBF5FB}
+.portal.admin .ico{background:#FEF9E7}
+.portal h3{font-size:16px;font-weight:700;margin-bottom:5px}
+.portal p{font-size:13px;color:#718096}
+
+/* STEPS */
+.pasos{display:flex;align-items:center;margin-bottom:20px}
+.paso{display:flex;align-items:center;flex:1}
+.paso-dot{width:30px;height:30px;border-radius:50%;background:#e2e8f0;color:#a0aec0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;transition:all 0.3s}
+.paso-dot.activo{background:#1B4F72;color:white}
+.paso-dot.hecho{background:#27AE60;color:white}
+.paso-linea{flex:1;height:2px;background:#e2e8f0;transition:background 0.3s}
+.paso-linea.hecha{background:#27AE60}
+
+/* FECHAS */
+.fechas-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.fecha-btn{padding:10px 12px;border-radius:10px;border:1.5px solid #e2e8f0;background:white;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;transition:all 0.2s;text-align:center;min-width:64px}
+.fecha-btn.sel{background:#1B4F72;color:white;border-color:#1B4F72}
+.fecha-btn:hover:not(.sel):not(:disabled){border-color:#2980B9;color:#1B4F72}
+.fecha-btn:disabled{opacity:0.4;cursor:not-allowed}
+.fecha-btn .dia-num{font-size:20px;font-weight:700;display:block}
+.fecha-btn .dia-nom{font-size:11px;display:block}
+.fecha-btn .dia-mes{font-size:10px;opacity:0.7;display:block}
+
+/* ESPECIALIDADES */
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{padding:6px 14px;border-radius:20px;background:#EBF5FB;color:#1B4F72;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all 0.2s}
+.tag.sel{background:#1B4F72;color:white}
+.tag:hover:not(.sel){border-color:#1B4F72}
+
+/* CUPOS */
+.cupos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:340px){.cupos-grid{grid-template-columns:repeat(2,1fr)}}
+.cupo-btn{padding:12px 8px;border-radius:10px;border:1.5px solid #e2e8f0;background:white;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Inter',sans-serif;width:100%}
+.cupo-btn:hover{border-color:#2980B9;background:#EBF5FB}
+.cupo-btn.sel{border-color:#1B4F72;background:#1B4F72;color:white}
+.cupo-hora{font-size:16px;font-weight:700;display:block}
+.cupo-prof{font-size:11px;color:#718096;display:block;margin-top:2px}
+.cupo-btn.sel .cupo-prof{color:rgba(255,255,255,0.7)}
+
+/* FORMULARIO */
+.campo{margin-bottom:14px}
+.campo label{display:block;font-size:12px;font-weight:700;color:#718096;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+.campo input,.campo select{width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:9px;font-family:'Inter',sans-serif;font-size:15px;color:#1a202c;background:white;outline:none;transition:border-color 0.2s}
+.campo input:focus,.campo select:focus{border-color:#2980B9}
+.campo select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+input[type=date],input[type=time]{width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:9px;font-family:'Inter',sans-serif;font-size:15px;color:#1a202c;background:white;outline:none}
+input[type=date]:focus,input[type=time]:focus{border-color:#2980B9}
+
+/* BOTONES */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:10px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;width:100%;transition:all 0.2s;margin-bottom:10px}
+.btn:disabled{opacity:0.55;cursor:not-allowed}
+.btn-pri{background:#1B4F72;color:white}
+.btn-pri:hover:not(:disabled){background:#154060}
+.btn-ok{background:#27AE60;color:white}
+.btn-ok:hover:not(:disabled){background:#1e8449}
+.btn-sec{background:white;border:1.5px solid #e2e8f0;color:#718096}
+.btn-sec:hover{border-color:#1B4F72;color:#1B4F72}
+.btn-borrar{background:#FDEDEC;color:#922B21;border:1px solid #fadbd8;font-size:13px;padding:6px 12px;border-radius:7px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600}
+.btn-borrar:hover{background:#E74C3C;color:white}
+
+/* ALERTAS */
+.alerta{padding:13px 15px;border-radius:10px;font-size:13px;margin-bottom:14px;line-height:1.5}
+.alerta-info{background:#EBF5FB;color:#1B4F72;border-left:3px solid #2980B9}
+.alerta-ok{background:#EAFAF1;color:#1A6B3C;border-left:3px solid #27AE60}
+.alerta-err{background:#FDEDEC;color:#922B21;border-left:3px solid #E74C3C}
+
+/* CONFIRMACIÓN */
+.caja-confirm{background:#1B4F72;color:white;border-radius:16px;padding:28px;text-align:center;margin-bottom:16px}
+.confirm-codigo{font-size:32px;font-weight:700;letter-spacing:5px;background:rgba(255,255,255,0.15);padding:12px 24px;border-radius:12px;display:inline-block;margin:14px 0}
+.confirm-sub{font-size:13px;opacity:0.8}
+
+/* BADGES */
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
-.badge-green{background:var(--green-pale);color:var(--green)}
-.badge-blue{background:var(--blue-pale);color:var(--blue)}
-.badge-red{background:var(--red-pale);color:var(--red)}
-.badge-gray{background:var(--gray-pale);color:var(--gray)}
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
-.stat-card{background:var(--surface);border-radius:var(--rs);padding:1rem;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
-.stat-number{font-size:26px;font-weight:700}
-.stat-label{font-size:11px;color:var(--gray);margin-top:2px}
-.stat-card.blue .stat-number{color:var(--blue)}
-.stat-card.green .stat-number{color:var(--green-mid)}
-.stat-card.orange .stat-number{color:#E67E22}
-.confirm-box{background:var(--blue);color:#fff;border-radius:16px;padding:2rem;text-align:center;margin-bottom:1rem}
-.confirm-code{font-size:34px;font-weight:700;letter-spacing:4px;font-family:'Playfair Display',serif;background:rgba(255,255,255,0.15);padding:12px 24px;border-radius:var(--r);display:inline-block;margin:1rem 0}
-.confirm-detail{font-size:13px;opacity:0.8;margin-top:0.25rem}
-.reserva-item{display:flex;align-items:center;justify-content:space-between;padding:0.85rem 0;border-bottom:1px solid var(--gray-pale);gap:12px}
-.reserva-item:last-child{border-bottom:none}
-.reserva-hora{font-size:20px;font-weight:700;color:var(--blue);min-width:50px}
-.reserva-info{flex:1}
-.reserva-nombre{font-weight:600;font-size:14px}
-.reserva-rut{font-size:12px;color:var(--gray);margin-top:2px}
-.cupo-item{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0;border-bottom:1px solid var(--gray-pale);gap:10px}
-.cupo-item:last-child{border-bottom:none}
-.date-btn{padding:10px 14px;border-radius:var(--rs);border:1.5px solid var(--gray-light);background:var(--surface);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;transition:all 0.2s;color:var(--text);text-align:center}
-.date-btn.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
-.date-btn:hover:not(.selected):not(:disabled){border-color:var(--blue);color:var(--blue)}
-.date-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
-.empty{text-align:center;padding:2.5rem 1rem;color:var(--gray)}
-.empty-icon{font-size:44px;margin-bottom:0.75rem}
-.empty h3{font-size:15px;font-weight:600;margin-bottom:0.35rem;color:var(--text)}
-.pin-input{font-size:32px;letter-spacing:12px;text-align:center;width:100%;padding:16px;border:2px solid var(--gray-light);border-radius:var(--r);font-family:monospace;outline:none}
-.pin-input:focus{border-color:var(--blue)}
-.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray);margin-bottom:0.75rem;display:flex;align-items:center;gap:8px}
-.section-title::after{content:'';flex:1;height:1px;background:var(--gray-light)}
-.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:#17202A;color:#fff;padding:12px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform 0.3s ease;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.alert{padding:12px 14px;border-radius:var(--rs);font-size:14px;margin-bottom:1rem}
-.alert-info{background:var(--blue-pale);color:var(--blue);border-left:3px solid var(--blue-mid)}
-.alert-success{background:var(--green-pale);color:var(--green);border-left:3px solid var(--green-mid)}
-.alert-danger{background:var(--red-pale);color:var(--red);border-left:3px solid var(--red-mid)}
-.spec-tag{display:inline-flex;align-items:center;gap:5px;background:var(--blue-pale);color:var(--blue);padding:5px 13px;border-radius:20px;font-size:13px;font-weight:600;margin-right:6px;margin-bottom:6px;cursor:pointer;border:1.5px solid transparent;transition:all 0.2s}
-.spec-tag.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
-.spec-tag:hover:not(.selected){border-color:var(--blue)}
-.tabs{display:flex;gap:0;margin-bottom:1.25rem;border-bottom:2px solid var(--gray-light)}
-.tab-btn{padding:10px 18px;border:none;background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s}
-.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
-.tab-btn:hover:not(.active){color:var(--text)}
-.mt1{margin-top:1rem}
-.mb1{margin-bottom:1rem}
+.badge-ok{background:#EAFAF1;color:#1A6B3C}
+.badge-mal{background:#FDEDEC;color:#922B21}
+.badge-gris{background:#f0f4f8;color:#718096}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:white;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.stat-n{font-size:28px;font-weight:700}
+.stat-l{font-size:11px;color:#718096;margin-top:2px}
+.stat.azul .stat-n{color:#1B4F72}
+.stat.verde .stat-n{color:#27AE60}
+.stat.naranjo .stat-n{color:#E67E22}
+
+/* LISTAS */
+.item-reserva{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #f0f4f8;gap:12px}
+.item-reserva:last-child{border-bottom:none}
+.item-hora{font-size:18px;font-weight:700;color:#1B4F72;min-width:50px}
+.item-info{flex:1}
+.item-nombre{font-size:14px;font-weight:600}
+.item-rut{font-size:12px;color:#718096;margin-top:2px}
+.item-cupo{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f4f8;gap:10px}
+.item-cupo:last-child{border-bottom:none}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid #e2e8f0;margin-bottom:16px}
+.tab{padding:10px 16px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#718096;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab.activa{color:#1B4F72;border-bottom-color:#1B4F72}
+
+/* SECCIÓN */
+.sec-titulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#a0aec0;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-titulo::after{content:'';flex:1;height:1px;background:#e2e8f0}
+.mt{margin-top:14px}
+
+/* VACÍO */
+.vacio{text-align:center;padding:30px 16px;color:#a0aec0}
+.vacio-ico{font-size:40px;margin-bottom:10px}
+.vacio h3{font-size:14px;font-weight:600;color:#718096;margin-bottom:5px}
+
+/* LIVE */
+.live{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#27AE60;font-weight:600}
+.dot-live{width:7px;height:7px;border-radius:50%;background:#27AE60;animation:pulsar 2s infinite}
+@keyframes pulsar{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* PIN */
+.pin-input{font-size:36px;letter-spacing:14px;text-align:center;width:100%;padding:16px;border:2px solid #e2e8f0;border-radius:12px;font-family:monospace;outline:none;background:white}
+.pin-input:focus{border-color:#1B4F72}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(120px);background:#1a202c;color:white;padding:12px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform 0.3s;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.toast.visible{transform:translateX(-50%) translateY(0)}
+
+/* dos columnas grilla admin */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-logo">
-    <svg class="logo-icon" viewBox="0 0 28 28" fill="none">
-      <rect width="28" height="28" rx="14" fill="white"/>
-      <rect x="12" y="6" width="4" height="16" rx="2" fill="#1B4F72"/>
-      <rect x="6" y="12" width="16" height="4" rx="2" fill="#1B4F72"/>
-    </svg>
-    AgendaSalud
-  </div>
-  <button class="btn-back" id="btnBack" onclick="goBack()" style="display:none">← Volver</button>
+<!-- PANTALLA DE CARGA -->
+<div id="pantalla-carga">
+  <div class="rueda"></div>
+  <h2>AgendaSalud</h2>
+  <p>Conectando con la base de datos...</p>
 </div>
 
-<div class="main">
+<!-- HEADER -->
+<header id="encabezado" style="display:none">
+  <div class="logo">AgendaSalud <span>CESFAM</span></div>
+  <button id="btn-volver" onclick="volver()">← Volver</button>
+</header>
 
-  <!-- LANDING -->
-  <div class="view active" id="view-landing">
-    <div class="landing-hero">
+<!-- APP -->
+<div class="contenedor" id="app" style="display:none">
+
+  <!-- ── LANDING ── -->
+  <div class="vista" id="v-inicio">
+    <div class="hero">
       <h1>Agenda tu hora médica</h1>
-      <p>Revisa los cupos disponibles y reserva tu atención de forma rápida y segura</p>
+      <p>Reserva tu atención de forma rápida y sin llamadas telefónicas</p>
     </div>
-    <div class="alert alert-info">📅 Cupos disponibles de lunes a viernes · Atención presencial en el CESFAM</div>
-    <div class="portal-cards">
-      <div class="portal-card patient" onclick="showView('patient-date')">
-        <div class="card-icon">🏥</div>
+    <div class="alerta-info alerta">📅 Atención de lunes a viernes · Cupos disponibles en tiempo real</div>
+    <div class="portales">
+      <div class="portal paciente" onclick="ir('v-fecha')">
+        <div class="ico">🏥</div>
         <h3>Soy Paciente</h3>
-        <p>Reserva tu hora médica disponible</p>
+        <p>Reserva tu hora disponible</p>
       </div>
-      <div class="portal-card admin" onclick="showView('admin-login')">
-        <div class="card-icon">⚙️</div>
+      <div class="portal admin" onclick="ir('v-pin')">
+        <div class="ico">⚙️</div>
         <h3>Administrador</h3>
         <p>Panel de gestión de cupos</p>
       </div>
     </div>
   </div>
 
-  <!-- PATIENT: DATE -->
-  <div class="view" id="view-patient-date">
-    <div class="steps" id="steps">
-      <div class="step-item"><div class="step-dot active" id="step1">1</div><div class="step-line" id="line1"></div></div>
-      <div class="step-item"><div class="step-dot" id="step2">2</div><div class="step-line" id="line2"></div></div>
-      <div class="step-item"><div class="step-dot" id="step3">3</div><div class="step-line" id="line3"></div></div>
-      <div class="step-item"><div class="step-dot" id="step4">✓</div></div>
+  <!-- ── PACIENTE: FECHA ── -->
+  <div class="vista" id="v-fecha">
+    <div class="pasos">
+      <div class="paso"><div class="paso-dot activo" id="pd1">1</div><div class="paso-linea" id="pl1"></div></div>
+      <div class="paso"><div class="paso-dot" id="pd2">2</div><div class="paso-linea" id="pl2"></div></div>
+      <div class="paso"><div class="paso-dot" id="pd3">3</div><div class="paso-linea" id="pl3"></div></div>
+      <div class="paso"><div class="paso-dot" id="pd4">✓</div></div>
     </div>
     <div class="card">
-      <div class="card-header">
-        <span style="font-size:20px">📅</span>
-        <div><div class="card-title">Selecciona la fecha</div><div class="card-subtitle">¿Para cuándo necesitas tu hora?</div></div>
+      <div class="card-head"><span class="icono">📅</span>
+        <div><div class="card-titulo">Selecciona la fecha</div><div class="card-sub">Días con cupos disponibles</div></div>
       </div>
-      <div class="section-title">Próximos días disponibles</div>
-      <div class="date-group" id="dateBtns"></div>
-      <div class="section-title mt1">O elige otra fecha</div>
-      <input type="date" id="customDate" onchange="selectCustomDate(this.value)" min="">
+      <div class="fechas-grid" id="grid-fechas"></div>
+      <div class="sec-titulo mt">Otra fecha</div>
+      <input type="date" id="input-fecha" onchange="elegirFechaManual(this.value)">
     </div>
     <div class="card">
-      <div class="card-header">
-        <span style="font-size:20px">🩺</span>
-        <div><div class="card-title">Especialidad</div><div class="card-subtitle">Filtra por tipo de atención</div></div>
+      <div class="card-head"><span class="icono">🩺</span>
+        <div><div class="card-titulo">Especialidad</div><div class="card-sub">Filtra por tipo de atención</div></div>
       </div>
-      <div id="specTags"></div>
+      <div class="tags" id="tags-esp"></div>
     </div>
-    <button class="btn btn-primary" onclick="goToSlots()">Ver cupos disponibles →</button>
+    <button class="btn btn-pri" onclick="irACupos()">Ver cupos disponibles →</button>
   </div>
 
-  <!-- PATIENT: SLOTS -->
-  <div class="view" id="view-patient-slots">
+  <!-- ── PACIENTE: CUPOS ── -->
+  <div class="vista" id="v-cupos">
     <div class="card">
-      <div class="card-header">
-        <span style="font-size:20px">🕐</span>
-        <div><div class="card-title" id="slotDateTitle">Cupos disponibles</div><div class="card-subtitle" id="slotSubtitle">Selecciona un horario</div></div>
+      <div class="card-head"><span class="icono">🕐</span>
+        <div><div class="card-titulo" id="titulo-cupos">Horarios disponibles</div><div class="card-sub" id="sub-cupos"></div></div>
       </div>
-      <div id="slotsContainer"></div>
+      <div id="contenedor-cupos"></div>
     </div>
-    <button class="btn btn-outline mt1" onclick="showView('patient-date')">← Cambiar fecha</button>
+    <button class="btn btn-sec" onclick="ir('v-fecha')">← Cambiar fecha</button>
   </div>
 
-  <!-- PATIENT: FORM -->
-  <div class="view" id="view-patient-form">
-    <div id="selectedSlotSummary"></div>
+  <!-- ── PACIENTE: FORMULARIO ── -->
+  <div class="vista" id="v-form">
+    <div id="resumen-cupo"></div>
     <div class="card">
-      <div class="card-header">
-        <span style="font-size:20px">👤</span>
-        <div><div class="card-title">Tus datos</div><div class="card-subtitle">Completa para confirmar tu reserva</div></div>
+      <div class="card-head"><span class="icono">👤</span>
+        <div><div class="card-titulo">Tus datos</div><div class="card-sub">Completa para confirmar</div></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Nombre completo</label>
-        <input class="form-input" id="patNombre" type="text" placeholder="Ej: Juan Pérez Soto">
+      <div class="campo">
+        <label>Nombre completo</label>
+        <input id="f-nombre" type="text" placeholder="Ej: Juan Pérez Soto">
       </div>
-      <div class="form-group">
-        <label class="form-label">RUT</label>
-        <input class="form-input" id="patRut" type="text" placeholder="Ej: 12.345.678-9" maxlength="12" oninput="formatRut(this)">
+      <div class="campo">
+        <label>RUT</label>
+        <input id="f-rut" type="text" placeholder="Ej: 12.345.678-9" maxlength="12" oninput="formatearRut(this)">
       </div>
-      <div class="form-group">
-        <label class="form-label">Teléfono (opcional)</label>
-        <input class="form-input" id="patTel" type="tel" placeholder="+56 9 1234 5678">
+      <div class="campo">
+        <label>Teléfono (opcional)</label>
+        <input id="f-tel" type="tel" placeholder="+56 9 1234 5678">
       </div>
-      <div class="alert alert-info" style="font-size:13px">Al confirmar, el cupo queda reservado. Presenta el código al llegar al CESFAM.</div>
+      <div class="alerta alerta-info" style="font-size:13px">Al confirmar, el cupo se bloquea en tiempo real y nadie más puede tomarlo.</div>
     </div>
-    <button class="btn btn-success" onclick="confirmarReserva()">✓ Confirmar reserva</button>
-    <button class="btn btn-outline mt1" onclick="showView('patient-slots')">← Cambiar horario</button>
+    <button class="btn btn-ok" id="btn-confirmar" onclick="confirmar()">✓ Confirmar reserva</button>
+    <button class="btn btn-sec" onclick="ir('v-cupos')">← Cambiar horario</button>
   </div>
 
-  <!-- PATIENT: CONFIRM -->
-  <div class="view" id="view-patient-confirm">
-    <div class="confirm-box">
-      <div style="font-size:44px;margin-bottom:0.5rem">🎉</div>
-      <div style="font-size:20px;font-weight:700;margin-bottom:0.25rem">¡Reserva confirmada!</div>
-      <div style="font-size:14px;opacity:0.8">Tu código de atención:</div>
-      <div class="confirm-code" id="confirmCode">---</div>
-      <div class="confirm-detail" id="confirmDetail"></div>
+  <!-- ── PACIENTE: CONFIRMACIÓN ── -->
+  <div class="vista" id="v-confirmado">
+    <div class="caja-confirm">
+      <div style="font-size:48px">🎉</div>
+      <div style="font-size:20px;font-weight:700;margin-top:10px">¡Reserva confirmada!</div>
+      <div style="font-size:14px;opacity:0.8;margin-top:4px">Tu código de atención:</div>
+      <div class="confirm-codigo" id="cod-confirm"></div>
+      <div class="confirm-sub" id="det-confirm"></div>
     </div>
-    <div class="card" id="confirmCard"></div>
-    <div class="alert alert-info" style="font-size:13px">📋 Guarda este código o toma captura de pantalla. Preséntalo en recepción el día de tu atención.</div>
-    <button class="btn btn-outline" onclick="goHome()">Volver al inicio</button>
+    <div class="card" id="detalle-confirm"></div>
+    <div class="alerta alerta-info" style="font-size:13px">📸 Toma captura de pantalla. Presenta este código en recepción el día de tu atención.</div>
+    <button class="btn btn-sec" onclick="inicio()">Volver al inicio</button>
   </div>
 
-  <!-- ADMIN: LOGIN -->
-  <div class="view" id="view-admin-login">
-    <div class="card" style="max-width:320px;margin:2rem auto;text-align:center">
-      <div style="font-size:44px;margin-bottom:0.75rem">🔐</div>
-      <div class="card-title" style="font-size:18px;margin-bottom:0.25rem">Panel Administrativo</div>
-      <div class="card-subtitle mb1">Ingresa tu PIN de acceso</div>
-      <div class="form-group">
-        <input class="pin-input" id="pinInput" type="password" maxlength="4" placeholder="••••" onkeyup="if(event.key==='Enter')checkPin()">
+  <!-- ── ADMIN: PIN ── -->
+  <div class="vista" id="v-pin">
+    <div class="card" style="max-width:300px;margin:30px auto;text-align:center">
+      <div style="font-size:48px;margin-bottom:12px">🔐</div>
+      <div class="card-titulo" style="font-size:17px">Panel Administrativo</div>
+      <div class="card-sub" style="margin-bottom:16px">Ingresa tu PIN de 4 dígitos</div>
+      <div class="campo">
+        <input class="pin-input" id="input-pin" type="password" maxlength="4" placeholder="••••"
+          onkeyup="if(event.key==='Enter')verificarPin()">
       </div>
-      <div id="pinError" style="color:var(--red-mid);font-size:13px;margin-bottom:0.75rem;display:none">PIN incorrecto. Intenta nuevamente.</div>
-      <button class="btn btn-primary" onclick="checkPin()">Ingresar →</button>
-      <div style="margin-top:1rem;font-size:12px;color:var(--gray)">Demo: PIN 1234</div>
+      <div id="error-pin" style="color:#E74C3C;font-size:13px;margin-bottom:12px;display:none">PIN incorrecto</div>
+      <button class="btn btn-pri" onclick="verificarPin()">Ingresar →</button>
+      <div style="margin-top:12px;font-size:12px;color:#a0aec0">PIN de acceso: 1234</div>
     </div>
   </div>
 
-  <!-- ADMIN: DASHBOARD -->
-  <div class="view" id="view-admin">
+  <!-- ── ADMIN: PANEL ── -->
+  <div class="vista" id="v-admin">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700;color:#1B4F72">Panel de Gestión</div>
+      <span class="live"><span class="dot-live"></span>Tiempo real</span>
+    </div>
+
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('reservas')">📋 Reservas</button>
-      <button class="tab-btn" onclick="switchTab('cupos')">🗓 Cupos</button>
-      <button class="tab-btn" onclick="switchTab('agregar')">➕ Agregar</button>
+      <button class="tab activa" onclick="cambiarTab('reservas',this)">📋 Reservas</button>
+      <button class="tab" onclick="cambiarTab('cupos',this)">🗓 Cupos</button>
+      <button class="tab" onclick="cambiarTab('agregar',this)">➕ Agregar</button>
     </div>
 
+    <!-- TAB: RESERVAS -->
     <div id="tab-reservas">
-      <div class="stats-grid" id="adminStats"></div>
-      <div class="form-group">
-        <label class="form-label">Fecha a revisar</label>
-        <input type="date" id="adminDate" onchange="renderAdminReservas()">
+      <div class="stats" id="estadisticas"></div>
+      <div class="campo">
+        <label>Fecha a revisar</label>
+        <input type="date" id="admin-fecha" onchange="cargarReservas()">
       </div>
       <div class="card">
-        <div class="card-header">
-          <span style="font-size:18px">📋</span>
-          <div><div class="card-title">Lista de reservas</div><div class="card-subtitle" id="adminReservasSubtitle"></div></div>
+        <div class="card-head"><span class="icono">📋</span>
+          <div><div class="card-titulo">Reservas del día</div><div class="card-sub" id="sub-reservas"></div></div>
         </div>
-        <div id="adminReservasList"></div>
+        <div id="lista-reservas"><div class="vacio"><div class="vacio-ico">⏳</div><p>Cargando...</p></div></div>
       </div>
     </div>
 
+    <!-- TAB: CUPOS -->
     <div id="tab-cupos" style="display:none">
-      <div class="form-group">
-        <label class="form-label">Fecha</label>
-        <input type="date" id="adminCuposDate" onchange="renderAdminCupos()">
+      <div class="campo">
+        <label>Fecha</label>
+        <input type="date" id="admin-fecha-cupos" onchange="cargarCupos()">
       </div>
       <div class="card">
-        <div class="card-header">
-          <span style="font-size:18px">🗓</span>
-          <div><div class="card-title">Cupos configurados</div><div class="card-subtitle" id="adminCuposSubtitle"></div></div>
+        <div class="card-head"><span class="icono">🗓</span>
+          <div><div class="card-titulo">Cupos configurados</div><div class="card-sub" id="sub-cupos-admin"></div></div>
         </div>
-        <div id="adminCuposList"></div>
+        <div id="lista-cupos"></div>
       </div>
     </div>
 
+    <!-- TAB: AGREGAR -->
     <div id="tab-agregar" style="display:none">
       <div class="card">
-        <div class="card-header">
-          <span style="font-size:18px">➕</span>
-          <div><div class="card-title">Agregar cupos</div><div class="card-subtitle">Configura nuevos horarios de atención</div></div>
+        <div class="card-head"><span class="icono">➕</span>
+          <div><div class="card-titulo">Agregar cupos en bloque</div></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Profesional</label>
-          <select class="form-input form-select" id="newProf"><option value="">Seleccionar...</option></select>
+        <div class="campo">
+          <label>Profesional</label>
+          <select id="nuevo-prof"><option value="">Seleccionar...</option></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Especialidad</label>
-          <select class="form-input form-select" id="newSpec">
-            <option>Medicina General</option><option>Enfermería</option>
-            <option>Kinesiología</option><option>Matrona</option><option>Nutrición</option>
+        <div class="campo">
+          <label>Especialidad</label>
+          <select id="nuevo-esp">
+            <option>Medicina General</option>
+            <option>Enfermería</option>
+            <option>Kinesiología</option>
+            <option>Matrona</option>
+            <option>Nutrición</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Fecha</label>
-          <input type="date" class="form-input" id="newDate">
+        <div class="campo">
+          <label>Fecha</label>
+          <input type="date" id="nuevo-fecha">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="form-group">
-            <label class="form-label">Hora inicio</label>
-            <input type="time" class="form-input" id="newHoraInicio" value="08:00">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Hora fin</label>
-            <input type="time" class="form-input" id="newHoraFin" value="13:00">
-          </div>
+        <div class="grid2">
+          <div class="campo"><label>Hora inicio</label><input type="time" id="nuevo-ini" value="08:00"></div>
+          <div class="campo"><label>Hora fin</label><input type="time" id="nuevo-fin" value="13:00"></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Intervalo entre cupos</label>
-          <select class="form-input form-select" id="newIntervalo">
+        <div class="campo">
+          <label>Intervalo entre cupos</label>
+          <select id="nuevo-intervalo">
             <option value="15">15 minutos</option>
             <option value="20">20 minutos</option>
             <option value="30" selected>30 minutos</option>
             <option value="60">60 minutos</option>
           </select>
         </div>
-        <div id="previewCupos"></div>
-        <button class="btn btn-success" onclick="agregarCupos()">✓ Agregar cupos</button>
+        <button class="btn btn-ok" onclick="agregarCupos()">✓ Guardar cupos en Firebase</button>
       </div>
-      <div class="card mt1">
-        <div class="card-header">
-          <span style="font-size:18px">👩‍⚕️</span>
-          <div><div class="card-title">Agregar profesional</div></div>
+      <div class="card">
+        <div class="card-head"><span class="icono">👩‍⚕️</span>
+          <div><div class="card-titulo">Agregar profesional</div></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Nombre</label>
-          <input type="text" class="form-input" id="newProfName" placeholder="Ej: Dr. López">
+        <div class="campo">
+          <label>Nombre completo</label>
+          <input type="text" id="nuevo-prof-nombre" placeholder="Ej: Dr. Ana López">
         </div>
-        <button class="btn btn-outline" style="width:auto;padding:10px 20px;font-size:14px" onclick="agregarProfesional()">+ Agregar</button>
+        <button class="btn btn-sec" style="width:auto;padding:10px 20px;font-size:14px" onclick="agregarProfesional()">+ Agregar</button>
       </div>
     </div>
   </div>
 
-</div>
+</div><!-- /contenedor -->
 
 <div class="toast" id="toast"></div>
 
 <script>
-const ADMIN_PIN='1234';
-let state={selectedDate:null,selectedSpec:null,selectedCupo:null};
-const viewHistory=[];
+// ═══════════════════════════════════════════════════
+// CONFIGURACIÓN Y ESTADO
+// ═══════════════════════════════════════════════════
+var PIN_ADMIN = '1234';
+var sel = { fecha: null, esp: null, cupoId: null };
+var historial = [];
+var db;
+var escuchadores = [];
 
-function getData(){
-  return JSON.parse(localStorage.getItem('agendaSalud')||'null')||getInitialData();
-}
-function saveData(d){localStorage.setItem('agendaSalud',JSON.stringify(d));}
-
-function getInitialData(){
-  const profs=[
-    {id:'p1',nombre:'Dr. Carlos Vega'},
-    {id:'p2',nombre:'EU. Claudia Muñoz'},
-    {id:'p3',nombre:'KIN. Roberto Herrera'},
-    {id:'p4',nombre:'Mat. Patricia Silva'},
-    {id:'p5',nombre:'Dr. Andrés Rojas'},
-  ];
-  const cupos=[];
-  let cId=1;
-
-  function addSlots(fecha,profId,spec,horaInicio,horaFin,intervalo){
-    let [h,m]=horaInicio.split(':').map(Number);
-    const [fh,fm]=horaFin.split(':').map(Number);
-    while(h*60+m<fh*60+fm){
-      cupos.push({id:'c'+(cId++),fecha,hora:`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`,profesionalId:profId,especialidad:spec,reservado:false});
-      m+=intervalo;if(m>=60){h+=Math.floor(m/60);m=m%60;}
-    }
+// ═══════════════════════════════════════════════════
+// INICIO: FIREBASE
+// ═══════════════════════════════════════════════════
+window.onload = function() {
+  // Verificar si está configurado
+  if (FB_CONFIG.apiKey === "AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz123456") {
+    document.getElementById('pantalla-carga').innerHTML =
+      '<div style="text-align:center;padding:24px;max-width:380px">' +
+      '<div style="font-size:52px;margin-bottom:14px">⚠️</div>' +
+      '<h2 style="color:white;margin-bottom:10px;font-size:20px">Falta configurar Firebase</h2>' +
+      '<p style="color:rgba(255,255,255,0.8);font-size:14px;line-height:1.7">' +
+      'Abre el archivo <strong>index.html</strong> con el Bloc de notas, busca la sección ' +
+      '"{
+  "rules": {
+    ".read": true,
+    ".write": true
   }
-
-  const t=todayStr(),t1=dateStr(1),t2=dateStr(2),t3=dateStr(3),t4=dateStr(4);
-  addSlots(t,'p1','Medicina General','08:00','11:30',30);
-  addSlots(t,'p2','Enfermería','08:30','12:00',20);
-  addSlots(t,'p3','Kinesiología','09:00','12:00',30);
-  addSlots(t,'p4','Matrona','10:00','12:30',30);
-  addSlots(t1,'p1','Medicina General','08:00','13:00',30);
-  addSlots(t1,'p5','Medicina General','08:00','12:00',30);
-  addSlots(t1,'p2','Enfermería','08:00','12:30',20);
-  addSlots(t1,'p3','Kinesiología','09:00','13:00',30);
-  addSlots(t2,'p1','Medicina General','08:00','13:00',30);
-  addSlots(t2,'p4','Matrona','08:30','11:30',30);
-  addSlots(t2,'p5','Medicina General','08:00','11:00',30);
-  addSlots(t3,'p2','Enfermería','08:00','12:00',20);
-  addSlots(t3,'p3','Kinesiología','09:00','12:30',30);
-  addSlots(t4,'p1','Medicina General','08:00','13:00',30);
-  addSlots(t4,'p4','Matrona','09:00','12:00',30);
-
-  const data={profs,cupos,reservas:[]};
-  saveData(data);
-
-  // Seed 3 reservas demo hoy
-  const hoySlots=cupos.filter(c=>c.fecha===t&&!c.reservado).slice(0,3);
-  const demos=[{n:'María González',r:'15.234.567-8'},{n:'Pedro Rojas',r:'9.876.543-2'},{n:'Ana Soto',r:'12.111.222-3'}];
-  hoySlots.forEach((c,i)=>{
-    c.reservado=true;
-    const pref={Enfermería:'ENF','Medicina General':'MED',Kinesiología:'KIN',Matrona:'MAT',Nutrición:'NUT'}[c.especialidad]||'ATN';
-    data.reservas.push({id:'r'+i,cupoId:c.id,nombre:demos[i].n,rut:demos[i].r,telefono:'',codigo:pref+'-00'+(i+1),ts:new Date().toISOString()});
-  });
-  saveData(data);
-  return data;
-}
-
-function todayStr(){return new Date().toLocaleDateString('en-CA');}
-function dateStr(offset){const d=new Date();d.setDate(d.getDate()+offset);return d.toLocaleDateString('en-CA');}
-function formatDate(str){const d=new Date(str+'T12:00:00');return d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});}
-function formatDateShort(str){
-  const d=new Date(str+'T12:00:00');
-  const wd=d.toLocaleDateString('es-CL',{weekday:'short'});
-  return{wd:wd.charAt(0).toUpperCase()+wd.slice(1),day:d.getDate(),mo:d.toLocaleDateString('es-CL',{month:'short'})};
-}
-
-function showView(viewId){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+viewId).classList.add('active');
-  viewHistory.push(viewId);
-  document.getElementById('btnBack').style.display=viewId==='landing'?'none':'block';
-  window.scrollTo(0,0);
-  if(viewId==='patient-date')initPatientDate();
-  if(viewId==='patient-slots')renderSlots();
-  if(viewId==='admin')initAdmin();
-}
-
-function goBack(){
-  viewHistory.pop();
-  const prev=viewHistory[viewHistory.length-1]||'landing';
-  viewHistory.pop();
-  showView(prev);
-}
-
-function goHome(){
-  state.selectedDate=null;state.selectedCupo=null;state.selectedSpec=null;
-  while(viewHistory.length)viewHistory.pop();
-  showView('landing');
-}
-
-// ── PATIENT ──────────────────────────────────────────────
-function initPatientDate(){
-  updateSteps(1);
-  const today=todayStr();
-  const customEl=document.getElementById('customDate');
-  customEl.min=today;
-
-  const btnContainer=document.getElementById('dateBtns');
-  btnContainer.innerHTML='';
-  const d=getData();
-
-  for(let i=0;i<8;i++){
-    const ds=dateStr(i);
-    const{wd,day,mo}=formatDateShort(ds);
-    const hasSlots=d.cupos.some(c=>c.fecha===ds&&!c.reservado);
-    const btn=document.createElement('button');
-    btn.className='date-btn'+(state.selectedDate===ds?' selected':'');
-    btn.disabled=!hasSlots;
-    btn.style.opacity=hasSlots?'1':'0.4';
-    btn.style.cursor=hasSlots?'pointer':'not-allowed';
-    btn.style.minWidth='66px';
-    btn.innerHTML=`<div style="font-size:11px;font-weight:600">${wd}</div><div style="font-size:20px;font-weight:700">${day}</div><div style="font-size:11px;opacity:0.7">${mo}</div>`;
-    btn.onclick=()=>selectDate(ds);
-    btnContainer.appendChild(btn);
-  }
-
-  const specs=[...new Set(d.cupos.map(c=>c.especialidad))].sort();
-  const tagContainer=document.getElementById('specTags');
-  tagContainer.innerHTML='';
-  ['Todas',...specs].forEach(s=>{
-    const isAll=s==='Todas';
-    const t=document.createElement('span');
-    t.className='spec-tag'+((isAll&&!state.selectedSpec)||state.selectedSpec===s?' selected':'');
-    t.textContent=s;
-    t.onclick=()=>{state.selectedSpec=isAll?null:s;initPatientDate();};
-    tagContainer.appendChild(t);
-  });
-
-  if(!state.selectedDate)selectDate(today);
-}
-
-function selectDate(ds){
-  state.selectedDate=ds;
-  initPatientDate();
-}
-
-function selectCustomDate(val){
-  if(val){state.selectedDate=val;initPatientDate();}
-}
-
-function goToSlots(){
-  if(!state.selectedDate){showToast('Selecciona una fecha');return;}
-  showView('patient-slots');
-}
-
-function renderSlots(){
-  updateSteps(2);
-  const d=getData();
-  const prof=d.profs.reduce((a,p)=>{a[p.id]=p.nombre;return a;},{});
-  let cupos=d.cupos.filter(c=>c.fecha===state.selectedDate&&!c.reservado);
-  if(state.selectedSpec)cupos=cupos.filter(c=>c.especialidad===state.selectedSpec);
-  cupos.sort((a,b)=>a.hora.localeCompare(b.hora));
-
-  document.getElementById('slotDateTitle').textContent=formatDate(state.selectedDate);
-  document.getElementById('slotSubtitle').textContent=cupos.length+' cupo'+(cupos.length!==1?'s':'')+' disponible'+(cupos.length!==1?'s':'');
-
-  const container=document.getElementById('slotsContainer');
-  if(cupos.length===0){
-    container.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><h3>Sin cupos disponibles</h3><p>No hay cupos para esta fecha${state.selectedSpec?' en '+state.selectedSpec:''}.</p></div>`;
+}" y pega los datos de tu proyecto Firebase.<br><br>' +
+      'Sigue la guía paso a paso entregada.' +
+      '</p></div>';
     return;
   }
 
-  const bySpec={};
-  cupos.forEach(c=>{if(!bySpec[c.especialidad])bySpec[c.especialidad]=[];bySpec[c.especialidad].push(c);});
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    db = firebase.database();
+    cargarDatosIniciales();
+  } catch(e) {
+    document.getElementById('pantalla-carga').innerHTML =
+      '<div style="text-align:center;padding:24px;max-width:380px">' +
+      '<div style="font-size:52px;margin-bottom:14px">🔴</div>' +
+      '<h2 style="color:white;margin-bottom:10px;font-size:20px">Error de conexión</h2>' +
+      '<p style="color:rgba(255,255,255,0.8);font-size:14px;line-height:1.7">' +
+      'No se pudo conectar con Firebase. Verifica que los 7 valores estén correctos.' +
+      '<br><br><strong>Detalle:</strong> ' + e.message + '</p></div>';
+  }
+};
 
-  let html='';
-  Object.entries(bySpec).forEach(([spec,slots])=>{
-    html+=`<div class="section-title" style="margin-top:1rem">${spec}</div><div class="slots-grid">`;
-    slots.forEach(c=>{
-      html+=`<button class="slot-btn${state.selectedCupo===c.id?' selected':''}" onclick="selectSlot('${c.id}')">
-        <div class="slot-time">${c.hora}</div>
-        <div class="slot-prof">${(prof[c.profesionalId]||'').split(' ').slice(0,2).join(' ')}</div>
-      </button>`;
+function cargarDatosIniciales() {
+  // Timeout de 8 segundos
+  var timeout = setTimeout(function() {
+    document.getElementById('pantalla-carga').innerHTML =
+      '<div style="text-align:center;padding:24px;max-width:420px">' +
+      '<div style="font-size:52px;margin-bottom:14px">⏱️</div>' +
+      '<h2 style="color:white;margin-bottom:14px;font-size:18px">No se pudo conectar</h2>' +
+      '<div style="background:rgba(255,255,255,0.12);border-radius:12px;padding:16px;text-align:left;font-size:13px;color:rgba(255,255,255,0.9);line-height:1.8">' +
+      '<strong>Verifica estos 3 puntos en Firebase:</strong><br><br>' +
+      '1️⃣ &nbsp;<strong>Realtime Database creada</strong><br>' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;console.firebase.google.com → tu proyecto → Compilación → Realtime Database → Crear base de datos<br><br>' +
+      '2️⃣ &nbsp;<strong>Reglas en modo público</strong><br>' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;Pestaña Reglas → debe decir ".read": true y ".write": true → Publicar<br><br>' +
+      '3️⃣ &nbsp;<strong>databaseURL correcta</strong><br>' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;Debe ser exactamente:<br>' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;<code style="background:rgba(0,0,0,0.3);padding:3px 8px;border-radius:4px;font-size:11px">https://agenda-cesfam-f5f0a-default-rtdb.firebaseio.com</code>' +
+      '</div>' +
+      '<button onclick="location.reload()" style="margin-top:16px;background:white;color:#1B4F72;border:none;border-radius:10px;padding:12px 24px;font-size:15px;font-weight:700;cursor:pointer;width:100%">🔄 Reintentar</button>' +
+      '</div>';
+  }, 8000);
+
+  db.ref('profesionales').once('value', function(snap) {
+    clearTimeout(timeout);
+    if (!snap.val()) {
+      cargarDatosEjemplo(function() { mostrarApp(); });
+    } else {
+      mostrarApp();
+    }
+  }, function(err) {
+    clearTimeout(timeout);
+    document.getElementById('pantalla-carga').innerHTML =
+      '<div style="text-align:center;padding:24px;max-width:420px">' +
+      '<div style="font-size:52px;margin-bottom:14px">🔴</div>' +
+      '<h2 style="color:white;margin-bottom:14px;font-size:18px">Error de base de datos</h2>' +
+      '<div style="background:rgba(255,255,255,0.12);border-radius:12px;padding:16px;text-align:left;font-size:13px;color:rgba(255,255,255,0.9);line-height:1.8">' +
+      '<strong>Error detectado:</strong> ' + err.message + '<br><br>' +
+      '✅ Verifica que las Reglas de Realtime Database sean:<br>' +
+      '<code style="background:rgba(0,0,0,0.3);padding:4px 8px;border-radius:4px;font-size:11px">{ "rules": { ".read": true, ".write": true } }</code>' +
+      '</div>' +
+      '<button onclick="location.reload()" style="margin-top:16px;background:white;color:#1B4F72;border:none;border-radius:10px;padding:12px 24px;font-size:15px;font-weight:700;cursor:pointer;width:100%">🔄 Reintentar</button>' +
+      '</div>';
+  });
+}
+
+function mostrarApp() {
+  document.getElementById('pantalla-carga').style.display = 'none';
+  document.getElementById('encabezado').style.display = 'flex';
+  document.getElementById('app').style.display = 'block';
+  ir('v-inicio');
+}
+
+// ═══════════════════════════════════════════════════
+// DATOS DE EJEMPLO (primer uso)
+// ═══════════════════════════════════════════════════
+function cargarDatosEjemplo(callback) {
+  var profs = {
+    p1: { nombre: 'Dr. Carlos Vega' },
+    p2: { nombre: 'EU. Claudia Muñoz' },
+    p3: { nombre: 'KIN. Roberto Herrera' },
+    p4: { nombre: 'Mat. Patricia Silva' },
+    p5: { nombre: 'Dr. Andrés Rojas' }
+  };
+
+  var cupos = {};
+  var contador = 1;
+
+  function agregarBloqueLocal(fecha, profId, esp, hIni, hFin, intervalo) {
+    var partes = hIni.split(':');
+    var h = parseInt(partes[0]);
+    var m = parseInt(partes[1]);
+    var partesFin = hFin.split(':');
+    var fh = parseInt(partesFin[0]);
+    var fm = parseInt(partesFin[1]);
+    while (h * 60 + m < fh * 60 + fm) {
+      var hora = pad(h) + ':' + pad(m);
+      var id = 'c' + contador++;
+      cupos[id] = { fecha: fecha, hora: hora, profesionalId: profId, especialidad: esp, reservado: false };
+      m += intervalo;
+      if (m >= 60) { h += Math.floor(m / 60); m = m % 60; }
+    }
+  }
+
+  var t0 = getFecha(0), t1 = getFecha(1), t2 = getFecha(2), t3 = getFecha(3), t4 = getFecha(4);
+  agregarBloqueLocal(t0,'p1','Medicina General','08:00','11:30',30);
+  agregarBloqueLocal(t0,'p2','Enfermería','08:30','12:00',20);
+  agregarBloqueLocal(t0,'p3','Kinesiología','09:00','12:00',30);
+  agregarBloqueLocal(t0,'p4','Matrona','10:00','12:30',30);
+  agregarBloqueLocal(t1,'p1','Medicina General','08:00','13:00',30);
+  agregarBloqueLocal(t1,'p5','Medicina General','08:00','12:00',30);
+  agregarBloqueLocal(t1,'p2','Enfermería','08:00','12:30',20);
+  agregarBloqueLocal(t2,'p1','Medicina General','08:00','13:00',30);
+  agregarBloqueLocal(t2,'p4','Matrona','08:30','11:30',30);
+  agregarBloqueLocal(t3,'p2','Enfermería','08:00','12:00',20);
+  agregarBloqueLocal(t3,'p3','Kinesiología','09:00','12:30',30);
+  agregarBloqueLocal(t4,'p1','Medicina General','08:00','13:00',30);
+  agregarBloqueLocal(t4,'p4','Matrona','09:00','12:00',30);
+
+  var datos = { profesionales: profs, cupos: cupos };
+  db.ref().set(datos, function() {
+    if (callback) callback();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// UTILIDADES
+// ═══════════════════════════════════════════════════
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function getFecha(offset) {
+  var d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+}
+
+function hoy() { return getFecha(0); }
+
+function formatearFecha(str) {
+  var d = new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function formatearFechaCorta(str) {
+  var d = new Date(str + 'T12:00:00');
+  var wd = d.toLocaleDateString('es-CL', { weekday: 'short' });
+  return {
+    nom: wd.charAt(0).toUpperCase() + wd.slice(1),
+    dia: d.getDate(),
+    mes: d.toLocaleDateString('es-CL', { month: 'short' })
+  };
+}
+
+function formatearRut(input) {
+  var v = input.value.replace(/[^0-9kK]/g, '');
+  if (v.length > 1) {
+    var cuerpo = v.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    input.value = cuerpo + '-' + v.slice(-1).toUpperCase();
+  } else {
+    input.value = v;
+  }
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(function() { t.classList.remove('visible'); }, 2800);
+}
+
+// ═══════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════
+function ir(vistaId) {
+  document.querySelectorAll('.vista').forEach(function(v) { v.classList.remove('activa'); });
+  document.getElementById(vistaId).classList.add('activa');
+  historial.push(vistaId);
+  document.getElementById('btn-volver').style.display = vistaId === 'v-inicio' ? 'none' : 'block';
+  window.scrollTo(0, 0);
+
+  if (vistaId === 'v-fecha')   iniciarFecha();
+  if (vistaId === 'v-cupos')   renderCupos();
+  if (vistaId === 'v-admin')   iniciarAdmin();
+}
+
+function volver() {
+  historial.pop();
+  var prev = historial[historial.length - 1] || 'v-inicio';
+  historial.pop();
+  ir(prev);
+}
+
+function inicio() {
+  sel.fecha = null; sel.esp = null; sel.cupoId = null;
+  limpiarEscuchadores();
+  historial = [];
+  ir('v-inicio');
+}
+
+function limpiarEscuchadores() {
+  escuchadores.forEach(function(fn) { fn(); });
+  escuchadores = [];
+}
+
+// ═══════════════════════════════════════════════════
+// PASOS
+// ═══════════════════════════════════════════════════
+function actualizarPasos(activo) {
+  for (var i = 1; i <= 4; i++) {
+    var dot = document.getElementById('pd' + i);
+    if (!dot) continue;
+    if (i < activo) { dot.className = 'paso-dot hecho'; dot.textContent = '✓'; }
+    else if (i === activo) { dot.className = 'paso-dot activo'; dot.textContent = i === 4 ? '✓' : i; }
+    else { dot.className = 'paso-dot'; dot.textContent = i === 4 ? '✓' : i; }
+    var linea = document.getElementById('pl' + i);
+    if (linea) linea.className = 'paso-linea' + (i < activo ? ' hecha' : '');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// PACIENTE: FECHA
+// ═══════════════════════════════════════════════════
+function iniciarFecha() {
+  actualizarPasos(1);
+  document.getElementById('input-fecha').min = hoy();
+
+  db.ref('cupos').once('value', function(snap) {
+    var cupos = snap.val() || {};
+    var gridFechas = document.getElementById('grid-fechas');
+    gridFechas.innerHTML = '';
+
+    for (var i = 0; i < 8; i++) {
+      var fecha = getFecha(i);
+      var haySlots = false;
+      Object.values(cupos).forEach(function(c) {
+        if (c.fecha === fecha && !c.reservado) haySlots = true;
+      });
+
+      var f = formatearFechaCorta(fecha);
+      var btn = document.createElement('button');
+      btn.className = 'fecha-btn' + (sel.fecha === fecha ? ' sel' : '');
+      btn.disabled = !haySlots;
+      btn.style.opacity = haySlots ? '1' : '0.4';
+      btn.style.cursor = haySlots ? 'pointer' : 'not-allowed';
+      btn.innerHTML =
+        '<span class="dia-nom">' + f.nom + '</span>' +
+        '<span class="dia-num">' + f.dia + '</span>' +
+        '<span class="dia-mes">' + f.mes + '</span>';
+      (function(fec) {
+        btn.onclick = function() { elegirFecha(fec); };
+      })(fecha);
+      gridFechas.appendChild(btn);
+    }
+
+    // Especialidades
+    var esps = [];
+    Object.values(cupos).forEach(function(c) {
+      if (esps.indexOf(c.especialidad) === -1) esps.push(c.especialidad);
     });
-    html+='</div>';
+    esps.sort();
+
+    var tagsEl = document.getElementById('tags-esp');
+    tagsEl.innerHTML = '';
+    ['Todas'].concat(esps).forEach(function(esp) {
+      var esAll = esp === 'Todas';
+      var tag = document.createElement('span');
+      tag.className = 'tag' + ((esAll && !sel.esp) || sel.esp === esp ? ' sel' : '');
+      tag.textContent = esp;
+      tag.onclick = function() {
+        sel.esp = esAll ? null : esp;
+        iniciarFecha();
+      };
+      tagsEl.appendChild(tag);
+    });
+
+    if (!sel.fecha) elegirFecha(hoy());
   });
-  container.innerHTML=html;
 }
 
-function selectSlot(id){
-  state.selectedCupo=id;
-  updateSteps(3);
-  const d=getData();
-  const cupo=d.cupos.find(c=>c.id===id);
-  const prof=d.profs.find(p=>p.id===cupo.profesionalId);
-  document.getElementById('selectedSlotSummary').innerHTML=`
-    <div class="alert alert-info" style="display:flex;align-items:center;gap:12px">
-      <span style="font-size:26px">📋</span>
-      <div>
-        <div style="font-weight:700;font-size:15px">${cupo.hora} hrs · ${cupo.especialidad}</div>
-        <div style="font-size:13px;color:var(--blue)">${prof?prof.nombre:''} · ${formatDate(cupo.fecha)}</div>
-      </div>
-    </div>`;
-  showView('patient-form');
+function elegirFecha(fecha) {
+  sel.fecha = fecha;
+  iniciarFecha();
 }
 
-function formatRut(input){
-  let v=input.value.replace(/[^0-9kK]/g,'');
-  if(v.length>1){const body=v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g,'.');const dv=v.slice(-1).toUpperCase();input.value=body+'-'+dv;}
-  else input.value=v;
+function elegirFechaManual(val) {
+  if (val) { sel.fecha = val; iniciarFecha(); }
 }
 
-function confirmarReserva(){
-  const nombre=document.getElementById('patNombre').value.trim();
-  const rut=document.getElementById('patRut').value.trim();
-  const tel=document.getElementById('patTel').value.trim();
-  if(!nombre){showToast('Ingresa tu nombre completo');return;}
-  if(!rut||rut.length<7){showToast('Ingresa un RUT válido');return;}
-  if(!state.selectedCupo){showToast('Selecciona un cupo');return;}
-
-  const d=getData();
-  const cupo=d.cupos.find(c=>c.id===state.selectedCupo);
-  if(!cupo||cupo.reservado){showToast('Este cupo ya no está disponible');return;}
-
-  const pref={Enfermería:'ENF','Medicina General':'MED',Kinesiología:'KIN',Matrona:'MAT',Nutrición:'NUT'};
-  const prefix=pref[cupo.especialidad]||'ATN';
-  const codigo=prefix+'-'+String(d.reservas.length+1).padStart(3,'0');
-
-  cupo.reservado=true;
-  d.reservas.push({id:'r'+Date.now(),cupoId:cupo.id,nombre,rut,telefono:tel,codigo,ts:new Date().toISOString()});
-  saveData(d);
-
-  const prof=d.profs.find(p=>p.id===cupo.profesionalId);
-  document.getElementById('confirmCode').textContent=codigo;
-  document.getElementById('confirmDetail').textContent=cupo.hora+' hrs · '+formatDate(cupo.fecha);
-  document.getElementById('confirmCard').innerHTML=`
-    <div class="section-title">Detalle de tu reserva</div>
-    <div class="reserva-item" style="padding:0.5rem 0"><span style="color:var(--gray);font-size:13px;min-width:90px">Especialidad</span><span style="font-weight:600;text-align:right">${cupo.especialidad}</span></div>
-    <div class="reserva-item" style="padding:0.5rem 0"><span style="color:var(--gray);font-size:13px;min-width:90px">Profesional</span><span style="font-weight:600;text-align:right">${prof?prof.nombre:'-'}</span></div>
-    <div class="reserva-item" style="padding:0.5rem 0"><span style="color:var(--gray);font-size:13px;min-width:90px">Fecha</span><span style="font-weight:600;text-align:right">${formatDate(cupo.fecha)}</span></div>
-    <div class="reserva-item" style="padding:0.5rem 0;border:none"><span style="color:var(--gray);font-size:13px;min-width:90px">Hora</span><span style="font-weight:600;text-align:right">${cupo.hora} hrs</span></div>`;
-  updateSteps(4);
-  showView('patient-confirm');
+function irACupos() {
+  if (!sel.fecha) { toast('Selecciona una fecha'); return; }
+  ir('v-cupos');
 }
 
-function updateSteps(active){
-  for(let i=1;i<=4;i++){
-    const dot=document.getElementById('step'+i);
-    if(!dot)continue;
-    if(i<active){dot.className='step-dot done';dot.textContent='✓';}
-    else if(i===active){dot.className='step-dot active';dot.textContent=i===4?'✓':i;}
-    else{dot.className='step-dot';dot.textContent=i===4?'✓':i;}
-    const line=document.getElementById('line'+i);
-    if(line)line.className='step-line'+(i<active?' done':'');
-  }
-}
+// ═══════════════════════════════════════════════════
+// PACIENTE: CUPOS
+// ═══════════════════════════════════════════════════
+function renderCupos() {
+  actualizarPasos(2);
+  var contenedor = document.getElementById('contenedor-cupos');
+  contenedor.innerHTML = '<div class="vacio"><div class="vacio-ico">⏳</div><p>Cargando cupos...</p></div>';
 
-// ── ADMIN ─────────────────────────────────────────────────
-function checkPin(){
-  const pin=document.getElementById('pinInput').value;
-  if(pin===ADMIN_PIN){
-    document.getElementById('pinInput').value='';
-    document.getElementById('pinError').style.display='none';
-    showView('admin');
-  }else{
-    document.getElementById('pinError').style.display='block';
-    document.getElementById('pinInput').value='';
-  }
-}
+  db.ref('cupos').once('value', function(snap) {
+    var cupos = snap.val() || {};
+    var lista = [];
+    Object.entries(cupos).forEach(function(par) {
+      var id = par[0], c = par[1];
+      if (c.fecha === sel.fecha && !c.reservado) {
+        if (!sel.esp || c.especialidad === sel.esp) lista.push(Object.assign({ id: id }, c));
+      }
+    });
+    lista.sort(function(a, b) { return a.hora > b.hora ? 1 : -1; });
 
-function initAdmin(){
-  const today=todayStr();
-  document.getElementById('adminDate').value=today;
-  document.getElementById('adminCuposDate').value=today;
-  document.getElementById('newDate').value=today;
-  renderAdminStats();renderAdminReservas();renderAdminCupos();renderProfOptions();
-  switchTab('reservas');
-}
+    document.getElementById('titulo-cupos').textContent = formatearFecha(sel.fecha);
+    document.getElementById('sub-cupos').textContent =
+      lista.length + ' cupo' + (lista.length !== 1 ? 's' : '') + ' disponible' + (lista.length !== 1 ? 's' : '');
 
-function renderAdminStats(){
-  const d=getData(),today=todayStr();
-  const total=d.cupos.filter(c=>c.fecha===today).length;
-  const reservados=d.cupos.filter(c=>c.fecha===today&&c.reservado).length;
-  document.getElementById('adminStats').innerHTML=`
-    <div class="stat-card blue"><div class="stat-number">${total}</div><div class="stat-label">Cupos hoy</div></div>
-    <div class="stat-card green"><div class="stat-number">${total-reservados}</div><div class="stat-label">Disponibles</div></div>
-    <div class="stat-card orange"><div class="stat-number">${reservados}</div><div class="stat-label">Reservados</div></div>`;
-}
-
-function renderAdminReservas(){
-  const fecha=document.getElementById('adminDate').value;
-  const d=getData();
-  const prof=d.profs.reduce((a,p)=>{a[p.id]=p.nombre;return a;},{});
-  const reservasHoy=d.cupos
-    .filter(c=>c.fecha===fecha&&c.reservado)
-    .map(c=>({cupo:c,reserva:d.reservas.find(r=>r.cupoId===c.id)}))
-    .filter(x=>x.reserva)
-    .sort((a,b)=>a.cupo.hora.localeCompare(b.cupo.hora));
-
-  document.getElementById('adminReservasSubtitle').textContent=formatDate(fecha)+' · '+reservasHoy.length+' reserva'+(reservasHoy.length!==1?'s':'');
-  const list=document.getElementById('adminReservasList');
-  if(reservasHoy.length===0){
-    list.innerHTML=`<div class="empty" style="padding:2rem 0"><div class="empty-icon">📭</div><p>Sin reservas para esta fecha</p></div>`;
-    return;
-  }
-  list.innerHTML=reservasHoy.map(({cupo,reserva})=>`
-    <div class="reserva-item">
-      <div class="reserva-hora">${cupo.hora}</div>
-      <div class="reserva-info">
-        <div class="reserva-nombre">${reserva.nombre}</div>
-        <div class="reserva-rut">${reserva.rut}</div>
-        <div style="font-size:11px;color:var(--gray);margin-top:2px">${prof[cupo.profesionalId]||''} · ${cupo.especialidad}</div>
-      </div>
-      <div style="text-align:right">
-        <span class="badge badge-green">${reserva.codigo}</span>
-        ${reserva.telefono?`<div style="font-size:11px;color:var(--gray);margin-top:4px">${reserva.telefono}</div>`:''}
-      </div>
-    </div>`).join('');
-}
-
-function renderAdminCupos(){
-  const fecha=document.getElementById('adminCuposDate').value;
-  const d=getData();
-  const prof=d.profs.reduce((a,p)=>{a[p.id]=p.nombre;return a;},{});
-  const cupos=d.cupos.filter(c=>c.fecha===fecha).sort((a,b)=>a.hora.localeCompare(b.hora));
-  document.getElementById('adminCuposSubtitle').textContent=formatDate(fecha)+' · '+cupos.length+' cupos';
-  const list=document.getElementById('adminCuposList');
-  if(cupos.length===0){
-    list.innerHTML=`<div class="empty" style="padding:2rem 0"><div class="empty-icon">📭</div><p>Sin cupos para esta fecha</p></div>`;
-    return;
-  }
-  list.innerHTML=cupos.map(c=>`
-    <div class="cupo-item">
-      <div style="font-size:16px;font-weight:700;min-width:48px;color:var(--blue)">${c.hora}</div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:600">${prof[c.profesionalId]||'Profesional'}</div>
-        <div style="font-size:12px;color:var(--gray)">${c.especialidad}</div>
-      </div>
-      <div>${c.reservado?'<span class="badge badge-red">Reservado</span>':`<button class="btn-danger-sm" onclick="eliminarCupo('${c.id}')">Eliminar</button>`}</div>
-    </div>`).join('');
-}
-
-function eliminarCupo(id){
-  if(!confirm('¿Eliminar este cupo disponible?'))return;
-  const d=getData();
-  d.cupos=d.cupos.filter(c=>c.id!==id);
-  saveData(d);
-  renderAdminCupos();renderAdminStats();
-  showToast('Cupo eliminado');
-}
-
-function renderProfOptions(){
-  const d=getData();
-  document.getElementById('newProf').innerHTML='<option value="">Seleccionar profesional...</option>'+
-    d.profs.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
-}
-
-function agregarCupos(){
-  const profId=document.getElementById('newProf').value;
-  const spec=document.getElementById('newSpec').value;
-  const fecha=document.getElementById('newDate').value;
-  const inicio=document.getElementById('newHoraInicio').value;
-  const fin=document.getElementById('newHoraFin').value;
-  const intervalo=parseInt(document.getElementById('newIntervalo').value);
-  if(!profId){showToast('Selecciona un profesional');return;}
-  if(!fecha){showToast('Selecciona una fecha');return;}
-  if(!inicio||!fin){showToast('Ingresa el horario');return;}
-
-  const d=getData();
-  let [h,m]=inicio.split(':').map(Number);
-  const [fh,fm]=fin.split(':').map(Number);
-  let added=0;
-  while(h*60+m<fh*60+fm){
-    const hora=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-    if(!d.cupos.some(c=>c.fecha===fecha&&c.profesionalId===profId&&c.hora===hora)){
-      d.cupos.push({id:'c'+Date.now()+'_'+added,fecha,hora,profesionalId:profId,especialidad:spec,reservado:false});
-      added++;
+    if (lista.length === 0) {
+      contenedor.innerHTML = '<div class="vacio"><div class="vacio-ico">📭</div><h3>Sin cupos disponibles</h3><p>No hay cupos para esta fecha.</p></div>';
+      return;
     }
-    m+=intervalo;if(m>=60){h+=Math.floor(m/60);m=m%60;}
+
+    // Agrupar por especialidad
+    db.ref('profesionales').once('value', function(pSnap) {
+      var profs = pSnap.val() || {};
+      var grupos = {};
+      lista.forEach(function(c) {
+        if (!grupos[c.especialidad]) grupos[c.especialidad] = [];
+        grupos[c.especialidad].push(c);
+      });
+
+      var html = '';
+      Object.entries(grupos).forEach(function(par) {
+        var esp = par[0], items = par[1];
+        html += '<div class="sec-titulo" style="margin-top:14px">' + esp + '</div><div class="cupos-grid">';
+        items.forEach(function(c) {
+          var profNom = profs[c.profesionalId] ? profs[c.profesionalId].nombre.split(' ').slice(0,2).join(' ') : '';
+          html += '<button class="cupo-btn' + (sel.cupoId === c.id ? ' sel' : '') + '" onclick="elegirCupo(\'' + c.id + '\')">' +
+            '<span class="cupo-hora">' + c.hora + '</span>' +
+            '<span class="cupo-prof">' + profNom + '</span>' +
+            '</button>';
+        });
+        html += '</div>';
+      });
+      contenedor.innerHTML = html;
+    });
+  });
+}
+
+function elegirCupo(id) {
+  sel.cupoId = id;
+  actualizarPasos(3);
+
+  db.ref('cupos/' + id).once('value', function(snap) {
+    var c = snap.val();
+    db.ref('profesionales/' + c.profesionalId).once('value', function(pSnap) {
+      var prof = pSnap.val() ? pSnap.val().nombre : '';
+      document.getElementById('resumen-cupo').innerHTML =
+        '<div class="alerta alerta-info" style="display:flex;align-items:center;gap:12px">' +
+        '<span style="font-size:24px">📋</span>' +
+        '<div><div style="font-weight:700;font-size:15px">' + c.hora + ' hrs · ' + c.especialidad + '</div>' +
+        '<div style="font-size:13px;color:#1B4F72">' + prof + ' · ' + formatearFecha(c.fecha) + '</div></div></div>';
+      ir('v-form');
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// PACIENTE: CONFIRMAR RESERVA
+// ═══════════════════════════════════════════════════
+function confirmar() {
+  var nombre = document.getElementById('f-nombre').value.trim();
+  var rut    = document.getElementById('f-rut').value.trim();
+  var tel    = document.getElementById('f-tel').value.trim();
+
+  if (!nombre) { toast('Ingresa tu nombre completo'); return; }
+  if (!rut || rut.length < 7) { toast('Ingresa un RUT válido'); return; }
+
+  var btn = document.getElementById('btn-confirmar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  var cupoRef = db.ref('cupos/' + sel.cupoId);
+
+  // Transacción atómica: evita doble reserva
+  cupoRef.transaction(function(cupo) {
+    if (cupo && !cupo.reservado) {
+      cupo.reservado = true;
+      return cupo;
+    }
+    return; // abortar si ya está reservado
+  }, function(error, committed, snap) {
+    if (error) {
+      toast('Error al guardar. Intenta nuevamente.');
+      btn.disabled = false; btn.textContent = '✓ Confirmar reserva';
+      return;
+    }
+
+    if (!committed) {
+      toast('⚠️ Este cupo ya fue tomado. Elige otro horario.');
+      btn.disabled = false; btn.textContent = '✓ Confirmar reserva';
+      ir('v-cupos');
+      return;
+    }
+
+    var cupoData = snap.val();
+    var prefijos = { 'Medicina General':'MED','Enfermería':'ENF','Kinesiología':'KIN','Matrona':'MAT','Nutrición':'NUT' };
+    var prefijo = prefijos[cupoData.especialidad] || 'ATN';
+
+    // Generar código único
+    db.ref('reservas').once('value', function(rSnap) {
+      var total = rSnap.val() ? Object.keys(rSnap.val()).length : 0;
+      var codigo = prefijo + '-' + pad3(total + 1);
+
+      var reservaData = {
+        cupoId: sel.cupoId,
+        nombre: nombre,
+        rut: rut,
+        telefono: tel,
+        codigo: codigo,
+        timestamp: new Date().toISOString()
+      };
+
+      db.ref('reservas').push(reservaData, function() {
+        db.ref('profesionales/' + cupoData.profesionalId).once('value', function(pSnap) {
+          var prof = pSnap.val() ? pSnap.val().nombre : '';
+          document.getElementById('cod-confirm').textContent = codigo;
+          document.getElementById('det-confirm').textContent = cupoData.hora + ' hrs · ' + formatearFecha(cupoData.fecha);
+          document.getElementById('detalle-confirm').innerHTML =
+            '<div class="sec-titulo">Detalle de tu reserva</div>' +
+            '<div class="item-reserva"><span style="color:#718096;font-size:13px;min-width:90px">Especialidad</span><span style="font-weight:600">' + cupoData.especialidad + '</span></div>' +
+            '<div class="item-reserva"><span style="color:#718096;font-size:13px;min-width:90px">Profesional</span><span style="font-weight:600">' + prof + '</span></div>' +
+            '<div class="item-reserva"><span style="color:#718096;font-size:13px;min-width:90px">Fecha</span><span style="font-weight:600">' + formatearFecha(cupoData.fecha) + '</span></div>' +
+            '<div class="item-reserva" style="border:none"><span style="color:#718096;font-size:13px;min-width:90px">Hora</span><span style="font-weight:600">' + cupoData.hora + ' hrs</span></div>';
+          actualizarPasos(4);
+          ir('v-confirmado');
+          btn.disabled = false; btn.textContent = '✓ Confirmar reserva';
+        });
+      });
+    });
+  });
+}
+
+function pad3(n) { return n < 10 ? '00' + n : n < 100 ? '0' + n : '' + n; }
+
+// ═══════════════════════════════════════════════════
+// ADMIN: PIN
+// ═══════════════════════════════════════════════════
+function verificarPin() {
+  var pin = document.getElementById('input-pin').value;
+  if (pin === PIN_ADMIN) {
+    document.getElementById('input-pin').value = '';
+    document.getElementById('error-pin').style.display = 'none';
+    ir('v-admin');
+  } else {
+    document.getElementById('error-pin').style.display = 'block';
+    document.getElementById('input-pin').value = '';
   }
-  saveData(d);renderAdminStats();
-  showToast(`✓ ${added} cupo${added!==1?'s':''} agregado${added!==1?'s':''}`);
-  switchTab('cupos');
-  document.getElementById('adminCuposDate').value=fecha;
-  renderAdminCupos();
 }
 
-function agregarProfesional(){
-  const nombre=document.getElementById('newProfName').value.trim();
-  if(!nombre){showToast('Ingresa el nombre del profesional');return;}
-  const d=getData();
-  d.profs.push({id:'p'+Date.now(),nombre});
-  saveData(d);
-  document.getElementById('newProfName').value='';
-  renderProfOptions();
-  showToast('Profesional agregado ✓');
-}
+// ═══════════════════════════════════════════════════
+// ADMIN: PANEL
+// ═══════════════════════════════════════════════════
+function iniciarAdmin() {
+  var t = hoy();
+  document.getElementById('admin-fecha').value = t;
+  document.getElementById('admin-fecha-cupos').value = t;
+  document.getElementById('nuevo-fecha').value = t;
+  cargarOpcProfesionales();
+  cambiarTab('reservas', document.querySelector('.tab.activa'));
+  cargarEstadisticas();
+  cargarReservas();
 
-function switchTab(tab){
-  ['reservas','cupos','agregar'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+  // Escuchar cambios en tiempo real
+  limpiarEscuchadores();
+
+  var refCupos = db.ref('cupos');
+  var cbCupos = refCupos.on('value', function() {
+    cargarEstadisticas();
+    cargarCupos();
+    cargarReservas();
   });
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active',['reservas','cupos','agregar'][i]===tab);
+  escuchadores.push(function() { refCupos.off('value', cbCupos); });
+
+  var refRes = db.ref('reservas');
+  var cbRes = refRes.on('value', function() {
+    cargarEstadisticas();
+    cargarReservas();
+  });
+  escuchadores.push(function() { refRes.off('value', cbRes); });
+}
+
+function cargarEstadisticas() {
+  var t = hoy();
+  db.ref('cupos').once('value', function(snap) {
+    var cupos = snap.val() || {};
+    var total = 0, reservados = 0;
+    Object.values(cupos).forEach(function(c) {
+      if (c.fecha === t) { total++; if (c.reservado) reservados++; }
+    });
+    document.getElementById('estadisticas').innerHTML =
+      '<div class="stat azul"><div class="stat-n">' + total + '</div><div class="stat-l">Cupos hoy</div></div>' +
+      '<div class="stat verde"><div class="stat-n">' + (total - reservados) + '</div><div class="stat-l">Disponibles</div></div>' +
+      '<div class="stat naranjo"><div class="stat-n">' + reservados + '</div><div class="stat-l">Reservados</div></div>';
   });
 }
 
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
+function cargarReservas() {
+  var fecha = document.getElementById('admin-fecha').value;
+  document.getElementById('sub-reservas').textContent = formatearFecha(fecha);
+
+  db.ref('cupos').once('value', function(cSnap) {
+    var cupos = cSnap.val() || {};
+    var cupoDia = [];
+    Object.entries(cupos).forEach(function(par) {
+      var id = par[0], c = par[1];
+      if (c.fecha === fecha && c.reservado) cupoDia.push(Object.assign({ id: id }, c));
+    });
+    cupoDia.sort(function(a, b) { return a.hora > b.hora ? 1 : -1; });
+
+    db.ref('reservas').once('value', function(rSnap) {
+      var reservas = rSnap.val() || {};
+      db.ref('profesionales').once('value', function(pSnap) {
+        var profs = pSnap.val() || {};
+        var lista = document.getElementById('lista-reservas');
+
+        if (cupoDia.length === 0) {
+          lista.innerHTML = '<div class="vacio" style="padding:24px 0"><div class="vacio-ico">📭</div><p>Sin reservas para esta fecha</p></div>';
+          return;
+        }
+
+        var html = '';
+        cupoDia.forEach(function(cupo) {
+          var res = null;
+          Object.values(reservas).forEach(function(r) { if (r.cupoId === cupo.id) res = r; });
+          if (!res) return;
+          var prof = profs[cupo.profesionalId] ? profs[cupo.profesionalId].nombre : '';
+          html += '<div class="item-reserva">' +
+            '<div class="item-hora">' + cupo.hora + '</div>' +
+            '<div class="item-info">' +
+              '<div class="item-nombre">' + res.nombre + '</div>' +
+              '<div class="item-rut">' + res.rut + '</div>' +
+              '<div style="font-size:11px;color:#a0aec0;margin-top:2px">' + prof + ' · ' + cupo.especialidad + '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<span class="badge badge-ok">' + res.codigo + '</span>' +
+              (res.telefono ? '<div style="font-size:11px;color:#718096;margin-top:4px">' + res.telefono + '</div>' : '') +
+            '</div>' +
+          '</div>';
+        });
+        lista.innerHTML = html || '<div class="vacio" style="padding:24px 0"><div class="vacio-ico">📭</div><p>Sin reservas para esta fecha</p></div>';
+      });
+    });
+  });
 }
 
-getData();
-showView('landing');
+function cargarCupos() {
+  var fecha = document.getElementById('admin-fecha-cupos').value;
+  document.getElementById('sub-cupos-admin').textContent = formatearFecha(fecha);
+
+  db.ref('cupos').once('value', function(cSnap) {
+    var cupos = cSnap.val() || {};
+    db.ref('profesionales').once('value', function(pSnap) {
+      var profs = pSnap.val() || {};
+      var lista = [];
+      Object.entries(cupos).forEach(function(par) {
+        var id = par[0], c = par[1];
+        if (c.fecha === fecha) lista.push(Object.assign({ id: id }, c));
+      });
+      lista.sort(function(a, b) { return a.hora > b.hora ? 1 : -1; });
+
+      var el = document.getElementById('lista-cupos');
+      if (lista.length === 0) {
+        el.innerHTML = '<div class="vacio" style="padding:24px 0"><div class="vacio-ico">📭</div><p>Sin cupos para esta fecha</p></div>';
+        return;
+      }
+
+      var html = '';
+      lista.forEach(function(c) {
+        var prof = profs[c.profesionalId] ? profs[c.profesionalId].nombre : 'Profesional';
+        html += '<div class="item-cupo">' +
+          '<div style="font-size:17px;font-weight:700;color:#1B4F72;min-width:48px">' + c.hora + '</div>' +
+          '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + prof + '</div><div style="font-size:12px;color:#718096">' + c.especialidad + '</div></div>' +
+          '<div>' + (c.reservado
+            ? '<span class="badge badge-mal">Reservado</span>'
+            : '<button class="btn-borrar" onclick="borrarCupo(\'' + c.id + '\')">Eliminar</button>'
+          ) + '</div>' +
+        '</div>';
+      });
+      el.innerHTML = html;
+    });
+  });
+}
+
+function borrarCupo(id) {
+  if (!confirm('¿Eliminar este cupo? No se puede deshacer.')) return;
+  db.ref('cupos/' + id).remove(function() {
+    toast('Cupo eliminado ✓');
+  });
+}
+
+function agregarCupos() {
+  var profId    = document.getElementById('nuevo-prof').value;
+  var esp       = document.getElementById('nuevo-esp').value;
+  var fecha     = document.getElementById('nuevo-fecha').value;
+  var ini       = document.getElementById('nuevo-ini').value;
+  var fin       = document.getElementById('nuevo-fin').value;
+  var intervalo = parseInt(document.getElementById('nuevo-intervalo').value);
+
+  if (!profId) { toast('Selecciona un profesional'); return; }
+  if (!fecha)  { toast('Selecciona una fecha'); return; }
+  if (!ini || !fin) { toast('Ingresa los horarios'); return; }
+
+  var pIni = ini.split(':');
+  var h = parseInt(pIni[0]), m = parseInt(pIni[1]);
+  var pFin = fin.split(':');
+  var fh = parseInt(pFin[0]), fm = parseInt(pFin[1]);
+  var agregados = 0;
+  var promesas = [];
+
+  db.ref('cupos').once('value', function(snap) {
+    var existentes = snap.val() || {};
+
+    while (h * 60 + m < fh * 60 + fm) {
+      var hora = pad(h) + ':' + pad(m);
+      var yaExiste = false;
+      Object.values(existentes).forEach(function(c) {
+        if (c.fecha === fecha && c.profesionalId === profId && c.hora === hora) yaExiste = true;
+      });
+
+      if (!yaExiste) {
+        var ref = db.ref('cupos').push();
+        promesas.push(ref.set({ fecha: fecha, hora: hora, profesionalId: profId, especialidad: esp, reservado: false }));
+        agregados++;
+      }
+
+      m += intervalo;
+      if (m >= 60) { h += Math.floor(m / 60); m = m % 60; }
+    }
+
+    if (agregados === 0) { toast('Esos cupos ya existen'); return; }
+
+    Promise.all(promesas).then(function() {
+      toast('✓ ' + agregados + ' cupo' + (agregados !== 1 ? 's' : '') + ' guardado' + (agregados !== 1 ? 's' : '') + ' en Firebase');
+      cambiarTab('cupos', null);
+      document.getElementById('admin-fecha-cupos').value = fecha;
+      cargarCupos();
+    });
+  });
+}
+
+function agregarProfesional() {
+  var nombre = document.getElementById('nuevo-prof-nombre').value.trim();
+  if (!nombre) { toast('Ingresa el nombre del profesional'); return; }
+  db.ref('profesionales').push({ nombre: nombre }, function() {
+    document.getElementById('nuevo-prof-nombre').value = '';
+    cargarOpcProfesionales();
+    toast('Profesional agregado ✓');
+  });
+}
+
+function cargarOpcProfesionales() {
+  db.ref('profesionales').once('value', function(snap) {
+    var profs = snap.val() || {};
+    var select = document.getElementById('nuevo-prof');
+    select.innerHTML = '<option value="">Seleccionar profesional...</option>';
+    Object.entries(profs).forEach(function(par) {
+      var opt = document.createElement('option');
+      opt.value = par[0];
+      opt.textContent = par[1].nombre;
+      select.appendChild(opt);
+    });
+  });
+}
+
+function cambiarTab(tab, btnEl) {
+  ['reservas','cupos','agregar'].forEach(function(t) {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(function(b) { b.classList.remove('activa'); });
+  if (btnEl) { btnEl.classList.add('activa'); }
+  else {
+    document.querySelectorAll('.tab').forEach(function(b, i) {
+      if (['reservas','cupos','agregar'][i] === tab) b.classList.add('activa');
+    });
+  }
+}
 </script>
 </body>
 </html>
